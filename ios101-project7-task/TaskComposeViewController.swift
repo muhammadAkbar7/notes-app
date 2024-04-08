@@ -73,7 +73,7 @@ class TaskComposeViewController: UIViewController {
             task.dueDate = datePicker.date
         } else {
             // 4.
-            task = Task(title: title,
+            task = Task(id: UUID().uuidString, title: title,
                         note: noteField.text,
                         dueDate: datePicker.date)
         }

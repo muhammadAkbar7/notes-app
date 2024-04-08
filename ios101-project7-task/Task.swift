@@ -5,7 +5,7 @@
 import UIKit
 
 // The Task model
-struct Task {
+struct Task: Codable {
 
     // The task's title
     var title: String
@@ -18,7 +18,9 @@ struct Task {
 
     // Initialize a new task
     // `note` and `dueDate` properties have default values provided if none are passed into the init by the caller.
-    init(title: String, note: String? = nil, dueDate: Date = Date()) {
+//    init(title: String, note: String? = nil, dueDate: Date = Date()) {
+    init(id: String, title: String, note: String? = nil, dueDate: Date = Date()) {
+        self.id = id
         self.title = title
         self.note = note
         self.dueDate = dueDate
@@ -47,30 +49,68 @@ struct Task {
     let createdDate: Date = Date()
 
     // An id (Universal Unique Identifier) used to identify a task.
-    let id: String = UUID().uuidString
+    //let id: String = UUID().uuidString
+    let id: String
 }
 
 // MARK: - Task + UserDefaults
 extension Task {
-
+    static let userDefaultsKey = "tasks"
 
     // Given an array of tasks, encodes them to data and saves to UserDefaults.
     static func save(_ tasks: [Task]) {
-
-        // TODO: Save the array of tasks
+        let encoder = JSONEncoder()
+         if let encodedData = try? encoder.encode(tasks) {
+             UserDefaults.standard.set(encodedData, forKey: userDefaultsKey)
+         } else {
+             print("Failed to encode tasks.")
+         }
     }
+//    static func save(_ tasks: [Task], forKey key: String) {
+//        // 1.
+//        let defaults = UserDefaults.standard
+//        // 2.
+//        let encodedData = try! JSONEncoder().encode(tasks)
+//        // 3.
+//        defaults.set(encodedData, forKey: key)
+//    }
 
     // Retrieve an array of saved tasks from UserDefaults.
     static func getTasks() -> [Task] {
-        
-        // TODO: Get the array of saved tasks from UserDefaults
-
-        return [] // 👈 replace with returned saved tasks
+        if let savedTasksData = UserDefaults.standard.data(forKey: userDefaultsKey) {
+            let decoder = JSONDecoder()
+            if let savedTasks = try? decoder.decode([Task].self, from: savedTasksData) {
+                return savedTasks
+            } else {
+                print("Failed to decode saved tasks.")
+            }
+        }
+        return [] // Return an empty array if tasks are not found or decoding fails.
     }
+    
+//    static func getTasks(forKey key: String) -> [Task] {
+//        // 1.
+//        let defaults = UserDefaults.standard
+//        // 2.
+//        if let data = defaults.data(forKey: key) {
+//            // 3.
+//            let decodedTasks = try! JSONDecoder().decode([Task].self, from: data)
+//            // 4.
+//            return decodedTasks
+//        } else {
+//            // 5.
+//            return []
+//        }
+//    }
 
     // Add a new task or update an existing task with the current task.
     func save() {
-
-        // TODO: Save the current task
+        var savedTasks = Task.getTasks()
+        if let index = savedTasks.firstIndex(where: { $0.id == self.id }) {
+            savedTasks[index] = self // Update existing task
+        } else {
+            savedTasks.append(self) // Add new task
+        }
+        Task.save(savedTasks)
     }
 }
